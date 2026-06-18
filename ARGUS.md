@@ -17,9 +17,9 @@
 ## 3. Chat Enhancements
 
 - [ ] Add persona prompt templates:
-  * `dev_bot`
-  * `researcher`
-  * `assistant`
+  - `dev_bot`
+  - `researcher`
+  - `assistant`
 - [ ] Slice persona selection into a reusable chat widget
 - [ ] Store best‑practice prompts in `_knowledgebase/chat-personas.md`
 - [ ] Add UI toggle for “Smart reply” feature
@@ -64,7 +64,7 @@
 
 ## 10. Notes & Tasks
 
-- [ ] Create a `Odysseus‑Roadmap.md` checklist
+- [ ] Use `ARGUS.md` as a baseline checklist but utilize Tasks and Notes too!
 - [ ] Automate task creation from email requests
 - [ ] Sync unfinished tasks to Obsidian daily
 
