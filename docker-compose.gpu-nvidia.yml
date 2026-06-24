@@ -32,8 +32,6 @@ services:
       - ./data/local:/app/.local:z
       - C:/Users/ajhar/code:/workspace:rw
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${APP_DATA_DIR:-./data}/local:/app/.local:z
-      - //./pipe/docker_engine://./pipe/docker_engine
     extra_hosts:
       # Lets the container reach local services on the Docker host, including
       # Ollama at http://host.docker.internal:11434.
@@ -81,7 +79,10 @@ services:
       # Find yours with:  id -u  /  id -g
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
-      - DOCKER_HOST=npipe:////./pipe/docker_engine
+      # Unix socket path — works for the Linux docker-ce-cli baked into the image.
+      # The npipe protocol is Windows-only and crashes the Linux CLI with
+      # "Failed to initialize: protocol not available".
+      - DOCKER_HOST=unix:///var/run/docker.sock
       # NVIDIA overlay (from docker/gpu.nvidia.yml).
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
