@@ -19,12 +19,14 @@ Contributing? See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing, and
 pull request guidelines.
 
 ### Docker (recommended)
+
 ```bash
 git clone https://github.com/pewdiepie-archdaemon/odysseus.git
 cd odysseus
 cp .env.example .env       # optional, but recommended for explicit defaults
 docker compose up -d --build
 ```
+
 To include optional extras in the image (PDF viewer, Office extraction; includes AGPL PyMuPDF), build with `docker compose build --build-arg INSTALL_OPTIONAL=true` before `up`.
 
 Open `http://localhost:7000` when the containers are healthy. Docker Compose
@@ -37,6 +39,7 @@ only when you intentionally want LAN/reverse-proxy access.
 > run natively instead — see [Apple Silicon](#apple-silicon) below.
 
 ### Native Linux / macOS
+
 ```bash
 git clone https://github.com/pewdiepie-archdaemon/odysseus.git
 cd odysseus
@@ -46,12 +49,14 @@ pip install -r requirements.txt
 python setup.py
 python -m uvicorn app:app --host 127.0.0.1 --port 7000
 ```
+
 Requirements: Python 3.11+. Cookbook also needs `tmux` for background model
 downloads and serves. The app itself is lightweight; local model serving is the
 heavy part and depends on the model, runtime, GPU, and VRAM, so small hosts can
 connect to API or remote model servers instead. Use `--host 0.0.0.0` only when you intentionally want LAN/reverse-proxy access.
 
 ### Apple Silicon
+
 Docker on macOS cannot use the Metal GPU. For GPU-accelerated Cookbook on an
 M-series Mac, run Odysseus natively:
 
@@ -78,8 +83,7 @@ expose this port directly to the public internet. To build a clickable app wrapp
 ./build-macos-app.sh
 ```
 
-<details>
-<summary>Cookbook, GPU, Ollama, and troubleshooting notes</summary>
+## Cookbook, GPU, Ollama, and troubleshooting notes
 
 **Docker bundled services.** Compose starts Odysseus, ChromaDB, SearXNG, and
 ntfy. Odysseus and the bundled service ports bind to `127.0.0.1` by default, so
@@ -125,6 +129,7 @@ scripts/check-docker-gpu.sh --install-nvidia-toolkit --enable-nvidia-overlay
 ```
 
 Safety notes:
+
 - The app never installs host GPU runtime automatically.
 - The app never edits `.env` automatically.
 - `.env` is only modified when `--enable-nvidia-overlay` is explicitly passed,
@@ -264,39 +269,49 @@ and configure everything else inside **Settings**.
 ## Troubleshooting & Advanced Setup
 
 ### `chromadb-client` conflicts with embedded ChromaDB
+
 If `chromadb-client` (the lightweight HTTP-only package) is installed alongside the full `chromadb` package, Odysseus starts but ChromaDB silently falls back to HTTP-only mode and fails.
 
 **Fix:** uninstall `chromadb-client` and force-reinstall the full package:
+
 ```bash
 ./venv/bin/pip uninstall chromadb-client -y
 ./venv/bin/pip install --force-reinstall chromadb
 ```
 
 ### HTTPS + LAN/Tailscale exposure
+
 To expose Odysseus on a local network or Tailscale with HTTPS:
+
 1. Change the bind address to `0.0.0.0` in `.env` (`APP_BIND=0.0.0.0` or `ODYSSEUS_HOST=0.0.0.0`).
 2. Generate a locally-trusted cert for your LAN/Tailscale IPs using [mkcert](https://github.com/FiloSottile/mkcert):
+
    ```bash
    mkcert -install
    mkcert -cert-file cert.pem -key-file key.pem 192.168.1.100 tailscale-ip
    ```
+
 3. Run `uvicorn` with the generated certs:
+
    ```bash
    python -m uvicorn app:app --host 0.0.0.0 --port 7000 --ssl-certfile=cert.pem --ssl-keyfile=key.pem
    ```
+
 4. Install the `mkcert` CA on any other device you want to access Odysseus from (e.g., for iOS, email the `rootCA.pem` to yourself, install the profile, and trust it in Certificate Trust Settings).
 
 ### Optional Dependencies
+
 `requirements-optional.txt` contains packages that unlock extra features. It is not installed by default.
 
 | Package | Feature unlocked |
-|---------|-----------------|
+| --------- | ----------------- |
 | `faster-whisper` | Local speech-to-text (microphone -> text) via the "local" STT provider. |
 | `ddgs` | DuckDuckGo as a search provider option. |
 | `PyMuPDF` | PDF page rendering in the side viewer panel and form-filling. (Note: AGPL-3.0) |
 | `markitdown` | Office/EPUB document text extraction (converts .docx/.xlsx/.pptx/.xls/.epub to Markdown). |
 
 ### Faster, reproducible installs with uv (optional)
+
 [uv](https://docs.astral.sh/uv/) works as a drop-in replacement for the
 venv + pip steps in the native install guides, no project changes are needed but this change results in faster installs along with a lockfile for reproducible environments. After [installing `uv`](https://docs.astral.sh/uv/getting-started/installation/), use:
 
@@ -316,12 +331,14 @@ uv pip sync requirements.lock                          # reproduce it exactly la
 `requirements.lock` is gitignored and platform-specific (compile it on the OS you deploy to). Regenerate it deliberately when you want to take upgrades. The plain `uv pip install -r requirements.txt` keeps following the unpinned requirements like pip does.
 
 ### Outlook / Office 365 email
+
 Odysseus email accounts currently use IMAP/SMTP username-password auth. Outlook
 and Microsoft 365 generally require OAuth instead, so normal Microsoft mailbox
 passwords will fail. See [docs/email-outlook.md](docs/email-outlook.md) for the
 current limitation and the planned integration direction.
 
 ## Security Notes
+
 Odysseus is a self-hosted workspace with powerful local tools: shell access, file uploads, model downloads, web research, email/calendar integrations, and API tokens. Treat it like an admin console.
 
 - Keep `AUTH_ENABLED=true` for any network-accessible deployment.
@@ -338,6 +355,7 @@ Odysseus is a self-hosted workspace with powerful local tools: shell access, fil
 - Before publishing a fork, run `git status --short` and confirm no private files from `.env`, `data/`, `logs/`, uploads, backups, or local databases are staged.
 
 ### Private or proxied deployments
+
 Odysseus serves plain HTTP on its app port. Docker Compose binds Odysseus and the bundled services to `127.0.0.1` by default, so a typical production/private setup is:
 
 1. Keep Odysseus on localhost, for example `127.0.0.1:7000`.
@@ -351,7 +369,7 @@ Cloudflare Access, Tailscale, Caddy, nginx, and Traefik can all fit this pattern
 Common internal-only ports from the default docs/compose setup:
 
 | Port | Service |
-|---|---|
+| --- | --- |
 | `7000` | Odysseus raw app port |
 | `8080` | SearXNG |
 | `8091` | ntfy |
@@ -360,12 +378,13 @@ Common internal-only ports from the default docs/compose setup:
 | `8000-8020` | Common local model/provider APIs |
 
 ## Configuration
+
 Most setup is done inside the app with `/setup` or **Settings**. Use `.env`
 for deployment-level defaults and secrets you want present before first boot.
 Key settings:
 
 | Variable | Default | Description |
-|---|---|---|
+| --- | --- | --- |
 | `LLM_HOST` | `localhost` | Your LLM server (e.g. `llm-host.local:8000`) |
 | `LLM_HOSTS` | -- | Comma-separated list for model discovery |
 | `OPENAI_API_KEY` | -- | Optional OpenAI key. Prefer adding providers in the app unless pre-seeding. |
@@ -407,7 +426,8 @@ npx -y @playwright/mcp@latest --version
 That installs `@playwright/mcp` plus Playwright (~300MB total). Restart Odysseus and the server will register at startup.
 
 ## Architecture
-```
+
+```bash
 app.py                   # FastAPI entry point
 core/      auth, database, middleware, constants
 src/       llm_core, agent_loop, agent_tools, chat_processor, search/
@@ -418,6 +438,7 @@ docs/      landing page (index.html) + preview clips
 ```
 
 ## Data
+
 All user data lives in `data/` (gitignored): `app.db` (sessions, messages, documents),
 `memory.json`, `presets.json`, `uploads/`, `personal_docs/`, `chroma/`, `settings.json`.
 

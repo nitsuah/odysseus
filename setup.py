@@ -148,9 +148,13 @@ def create_env():
         return
     if os.path.exists(example_path):
         import shutil
-        shutil.copy2(example_path, env_path)
-        print("  [ok] .env created from .env.example")
-        print("        ** Edit .env with your LLM host and API keys **")
+        try:
+            shutil.copy2(example_path, env_path)
+            print("  [ok] .env created from .env.example")
+            print("        ** Edit .env with your LLM host and API keys **")
+        except (PermissionError, OSError):
+            print("  [warn] Could not create .env (permission issue).")
+            print("         Using .env.example as-is.")
     else:
         print("  [warn] .env.example not found — create .env manually")
 

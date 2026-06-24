@@ -12,8 +12,11 @@
 services:
   odysseus:
     build: .
+    user: "0:0"
     ports:
       - "${APP_BIND:-127.0.0.1}:${APP_PORT:-7000}:7000"
+    group_add:
+      - "0" # for root-owned /var/run/docker.sock
     volumes:
       - ${APP_DATA_DIR:-./data}:/app/data:z
       - ${APP_LOGS_DIR:-./logs}:/app/logs:z
@@ -26,7 +29,9 @@ services:
       # Cookbook-installed Python CLIs/packages (vLLM, llama-cpp-python, etc.)
       # land under /app/.local for the odysseus user. Persist them so a
       # container recreate does not silently remove installed serve engines.
-      - ${APP_DATA_DIR:-./data}/local:/app/.local:z
+      - ./data/local:/app/.local:z
+      - C:/Users/ajhar/code:/workspace:rw
+      - /var/run/docker.sock:/var/run/docker.sock
     extra_hosts:
       # Lets the container reach local services on the Docker host, including
       # Ollama at http://host.docker.internal:11434.
@@ -74,6 +79,10 @@ services:
       # Find yours with:  id -u  /  id -g
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
+      # Unix socket path — works for the Linux docker-ce-cli baked into the image.
+      # The npipe protocol is Windows-only and crashes the Linux CLI with
+      # "Failed to initialize: protocol not available".
+      - DOCKER_HOST=unix:///var/run/docker.sock
       # NVIDIA overlay (from docker/gpu.nvidia.yml).
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
@@ -145,7 +154,11 @@ services:
       - SETUID
       - DAC_OVERRIDE
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/', timeout=5).read(1)\""]
+      test:
+        [
+          "CMD-SHELL",
+          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:8080/'', timeout=5).read(1)"',
+        ]
       interval: 5s
       timeout: 6s
       retries: 20
